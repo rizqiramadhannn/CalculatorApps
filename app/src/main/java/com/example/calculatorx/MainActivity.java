@@ -1,6 +1,7 @@
 package com.example.calculatorx;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -22,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initTextViews();
+        Log.i("TAG", "onCreate: ");
     }
 
     private void initTextViews(){
@@ -41,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
             resultsTV.setText("");
         }
         workings += givenValue;
+        Log.i("TAG", "setWorkings: " + workings);
         workingsTV.setText(workings);
     }
 
@@ -154,6 +157,18 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void deleteOnClick(View view) {
+        if (workings.length() == 0){
+            Toast.makeText(this, "Formula already empty!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Log.i("TAG", "deleteOnClick:" + workings.substring(workings.length() - 1));
+        if (workings.substring(workings.length() - 1).equals("(")) {
+            Log.i("TAG", "deleteOnClick: hi");
+            leftBracket = true;
+        }
+        if (workings.substring(workings.length() - 1).equals(")")) {
+            leftBracket = false;
+        }
         workings = workings.substring(0, workings.length() - 1);
         workingsTV.setText(workings);
     }
