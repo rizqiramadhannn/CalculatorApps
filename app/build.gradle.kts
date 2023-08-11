@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.calculatorx"
-        minSdk = 33
+        minSdk = 28
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
@@ -25,9 +25,20 @@ android {
             )
         }
     }
+    buildFeatures {
+        aidl = true
+        viewBinding = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    sourceSets {
+        getByName("main") {
+            aidl {
+                srcDirs("src/main/aidl", "src/main/aidl/2", "src/aidl")
+            }
+        }
     }
 }
 

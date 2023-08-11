@@ -1,18 +1,29 @@
-package com.example.calculatorx;
+package com.example.calculatorx.activity;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.calculatorx.ICaltulatorXAidlInterface;
+import com.example.calculatorx.R;
+import com.example.calculatorx.service.CalculatorService;
+
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 public class MainActivity extends AppCompatActivity {
-
+    private ICaltulatorXAidlInterface mCalculatorService;
     TextView workingsTV;
     TextView resultsTV;
 
@@ -24,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initTextViews();
         Log.i("TAG", "onCreate: ");
+        bindToCalculatorService();
     }
 
     private void initTextViews(){
@@ -46,6 +58,25 @@ public class MainActivity extends AppCompatActivity {
         Log.i("TAG", "setWorkings: " + workings);
         workingsTV.setText(workings);
     }
+
+    private void bindToCalculatorService() {
+        Intent intent = new Intent();
+        intent.setAction("com.example.calculatorx.ICaltulatorXAidlInterface");
+        intent.setPackage("com.example.calculatorx");
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            mCalculatorService = ICaltulatorXAidlInterface.Stub.asInterface(iBinder);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            mCalculatorService = null;
+        }
+    };
 
     boolean leftBracket = true;
     public void parenthesisOnClick(View view) {
@@ -76,18 +107,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void equalOnClick(View view) {
-        ScriptEngine engine = new ScriptEngineManager().getEngineByName("rhino");
-        workings = workings.replace('x', '*');
-        try {
-            result = (double)engine.eval(workings);
-        } catch (ScriptException e) {
-            Toast.makeText(this, "Invalid Input", Toast.LENGTH_SHORT).show();
-        }
-
-        if (result != null && result % 1 != 0.0){
-            resultsTV.setText(String.valueOf(result.doubleValue()));
-        }  else if (result != null){
-            resultsTV.setText(String.valueOf(result.intValue()));
+        if (mCalculatorService != null) {
+            try {
+                double result = mCalculatorService.evaluateExpression(workings);
+                if (!Double.isNaN(result)) {
+                    if (result % 1 != 0.0) {
+                        resultsTV.setText(String.valueOf(result));
+                    } else {
+                        resultsTV.setText(String.valueOf((int) result));
+                    }
+                } else {
+                    Toast.makeText(this, "Invalid Input", Toast.LENGTH_SHORT).show();
+                }
+            } catch (RemoteException e) {
+                Toast.makeText(this, "Failed to evaluate expression", Toast.LENGTH_SHORT).show();
+                e.printStackTrace();
+            }
+        } else {
+            Toast.makeText(this, "Service null", Toast.LENGTH_SHORT).show();
         }
     }
 
